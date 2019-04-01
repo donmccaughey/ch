@@ -1,11 +1,16 @@
 use std::borrow::Cow;
+use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
+use users::{User, Group, get_user_by_uid, get_group_by_gid};
 
 
 #[derive(Debug)]
 pub struct Target<'f> {
     pub file: &'f PathBuf,
     pub abs_path: Option<PathBuf>,
+    pub owner: Option<User>,
+    pub group: Option<Group>,
+    pub mode: Option<u32>,
 }
 
 impl<'f> Target<'f> {
@@ -15,9 +20,26 @@ impl<'f> Target<'f> {
             Ok(abs_path) => Some(abs_path),
             Err(_)               => None,
         };
+
+        let owner: Option<User>;
+        let group: Option<Group>;
+        let mode: Option<u32>;
+        if let Ok(metadata) = file.metadata() {
+            owner = get_user_by_uid(metadata.uid());
+            group = get_group_by_gid(metadata.gid());
+            mode = Some(metadata.mode());
+        } else {
+            owner = None;
+            group = None;
+            mode = None;
+        }
+
         Target {
             file: file,
             abs_path: abs_path,
+            owner: owner,
+            group: group,
+            mode: mode,
         }
     }
 
