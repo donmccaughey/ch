@@ -1,0 +1,9 @@
+[package]
+name = "ch"
+version = "0.1.0"
+authors = ["Don McCaughey <don@donm.cc>"]
+edition = "2018"
+
+[dependencies]
+structopt = "0.2"
+users = "0.9"
