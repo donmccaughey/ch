@@ -1,4 +1,5 @@
 mod options;
+mod mode;
 mod monitor;
 mod target;
 
