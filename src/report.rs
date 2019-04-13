@@ -8,13 +8,13 @@ use std::error::Error;
 use crate::changes::Changes;
 
 
-pub struct Monitor<'o> {
+pub struct Report<'o> {
     command: String,
     options: &'o Options,
 }
 
-impl<'o> Monitor<'o> {
-    pub fn new(options: &Options) -> Monitor {
+impl<'o> Report<'o> {
+    pub fn new(options: &Options) -> Report {
         let command = if let Some(arg) = args_os().nth(0) {
             let path = Path::new(&arg);
             if let Some(file_name) = path.file_name() {
@@ -25,7 +25,7 @@ impl<'o> Monitor<'o> {
         } else {
             "ch".to_string()
         };
-        Monitor {
+        Report {
             command: command,
             options: options,
         }
