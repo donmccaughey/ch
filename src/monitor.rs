@@ -1,10 +1,11 @@
 use crate::options::Options;
-use crate::target::Target;
 use std::borrow::Cow;
 use std::env::args_os;
 use std::path::Path;
+use std::path::PathBuf;
 use crate::file::File;
 use std::error::Error;
+use crate::changes::Changes;
 
 
 pub struct Monitor<'o> {
@@ -30,54 +31,51 @@ impl<'o> Monitor<'o> {
         }
     }
 
-    pub fn changed_target(&self, target: &'o Target, file: &File) {
+    pub fn file_was_changed(&self, file: &'o File, changes: &'o Changes) {
         match self.options.verbose {
             0 => (),
-            1 => println!("{}", self.target_name(target)),
-            _ => println!("{}: {}", self.target_name(target), self.property_changes(target, file)),
+            1 => println!("{}", self.file_name(file)),
+            _ => println!("{}: {}", self.file_name(file), self.change_list(file, changes)),
         }
     }
 
-    pub fn error_changing_target(&self, error: &Box<Error>, target: &'o Target, file: &File) {
-        eprintln!("{}: {}", self.target_name(target), error);
+    pub fn file_change_failed(&self, file: &'o File, error: &Box<Error>) {
+        eprintln!("{}: {}", self.file_name(file), error);
     }
 
-    pub fn missing_target(&self, target: &'o Target) {
+    pub fn target_is_missing(&self, name: &'o PathBuf) {
         println!("{}: {}: No such file or directory",
-                 self.command, target.name.to_string_lossy());
+                 self.command, name.to_string_lossy());
     }
 
-    fn property_changes(&self, target: &'o Target, file: &File) -> String {
+    fn change_list(&self, file: &'o File, changes: &'o Changes) -> String {
         let mut parts: Vec<String> = Vec::new();
 
-        if let Some(ref to_owner) = &self.options.owner {
+        if let Some(new_owner) = changes.owner {
             let change = format!("owner {} -> {}",
                                  file.owner.name().to_string_lossy(),
-                                 to_owner.name().to_string_lossy());
+                                 new_owner.name().to_string_lossy());
             parts.push(change);
         }
-        if let Some(ref to_group) = &self.options.group {
+        if let Some(new_group) = changes.group {
             let change = format!("group {} -> {}",
                                  file.group.name().to_string_lossy(),
-                                 to_group.name().to_string_lossy());
+                                 new_group.name().to_string_lossy());
             parts.push(change);
         }
-        if let Some(ref to_mode) = &self.options.mode {
-            let new_mode = to_mode.change(file.mode);
-            if file.mode != new_mode {
-                // TODO: mode 0100755 [-rwxr-xr-x ] -> 0100777 [-rwxrwxrwx ]
-                let change = format!("mode {:07o} -> {:07o}", file.mode, new_mode);
-                parts.push(change);
-            }
+        if let Some(new_mode) = changes.mode {
+            // TODO: mode 0100755 [-rwxr-xr-x ] -> 0100777 [-rwxrwxrwx ]
+            let change = format!("mode {:07o} -> {:07o}", file.mode, new_mode);
+            parts.push(change);
         }
 
         parts.join(", ")
     }
 
-    fn target_name(&self, target: &'o Target) -> Cow<str> {
+    fn file_name(&self, file: &'o File) -> Cow<str> {
         match self.options.verbose {
-            0...2 => target.short_name(),
-            _     => target.long_name(),
+            0...2 => file.name.to_string_lossy(),
+            _     => file.abs_path.to_string_lossy(),
         }
     }
 }

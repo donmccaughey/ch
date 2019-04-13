@@ -1,3 +1,4 @@
+mod changes;
 mod file;
 mod options;
 mod mode;
@@ -6,6 +7,7 @@ mod target;
 
 use options::Options;
 use monitor::Monitor;
+use target::Target;
 
 
 fn main() {
@@ -13,13 +15,16 @@ fn main() {
     let monitor = Monitor::new(&options);
 
     for target in options.targets() {
-        if let Some(ref file) = target.file {
-            match file.change_properties(&options) {
-                Ok(_) => monitor.changed_target(&target, file),
-                Err(ref error) => monitor.error_changing_target(error, &target, file),
-            }
-        } else {
-            monitor.missing_target(&target);
+        match target {
+            Target::Found(ref file) => {
+                match file.change_properties(&options) {
+                    Ok(changes) => monitor.file_was_changed(file, &changes),
+                    Err(ref error) => monitor.file_change_failed(file, error),
+                }
+            },
+            Target::Missing(name) => {
+                monitor.target_is_missing(name);
+            },
         }
     }
 }

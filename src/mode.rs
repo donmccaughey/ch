@@ -1,15 +1,19 @@
 use std::u32;
 
 
+pub type ModeT = u32;
+pub type ModeMask = u32;
+
+
 #[derive(Debug)]
 pub struct Mode {
-    pub additive_mask: u32,
-    pub subtractive_mask: u32,
+    pub additive_mask: ModeMask,
+    pub subtractive_mask: ModeMask,
 }
 
 impl Mode {
     pub fn new(mode_str: &str) -> Option<Mode> {
-        if let Ok(mode_bits) = u32::from_str_radix(mode_str, 8) {
+        if let Ok(mode_bits) = ModeT::from_str_radix(mode_str, 8) {
             return Some(Mode {
                 additive_mask: mode_bits,
                 subtractive_mask: 0o0000_7777,
@@ -19,7 +23,7 @@ impl Mode {
         }
     }
 
-    pub fn change(&self, mode_bits: u32) -> u32 {
+    pub fn change(&self, mode_bits: ModeT) -> ModeT {
         mode_bits & !self.subtractive_mask | self.additive_mask
     }
 }
