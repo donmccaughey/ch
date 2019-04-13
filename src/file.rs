@@ -1,10 +1,15 @@
-use crate::changes::Changes;
-use crate::options::Options;
+use std::error::Error;
 use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
-use users::{User, Group, get_user_by_uid, get_group_by_gid};
-use std::error::Error;
+
+use users::get_group_by_gid;
+use users::get_user_by_uid;
+use users::Group;
+use users::User;
+
+use crate::changes::Changes;
 use crate::mode::ModeT;
+use crate::options::Options;
 
 
 #[derive(Debug)]

@@ -1,11 +1,12 @@
-use crate::options::Options;
 use std::borrow::Cow;
 use std::env::args_os;
+use std::error::Error;
 use std::path::Path;
 use std::path::PathBuf;
-use crate::file::File;
-use std::error::Error;
+
 use crate::changes::Changes;
+use crate::file::File;
+use crate::options::Options;
 
 
 pub struct Report<'o> {

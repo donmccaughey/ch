@@ -1,3 +1,6 @@
+extern crate structopt;
+extern crate users;
+
 mod changes;
 mod file;
 mod mode;

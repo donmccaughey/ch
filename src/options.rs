@@ -1,15 +1,15 @@
-extern crate structopt;
-extern crate users;
-
-use crate::target::Target;
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
+use std::ffi::OsString;
 use std::path::PathBuf;
+
 use structopt::StructOpt;
 use users::get_group_by_name;
 use users::get_user_by_name;
 use users::Group;
 use users::User;
+
 use crate::mode::ModeChange;
+use crate::target::Target;
 
 
 fn get_group(group_name: &OsStr) -> Result<Group, OsString> {
