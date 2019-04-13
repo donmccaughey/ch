@@ -48,6 +48,10 @@ fn get_user(user_name: &OsStr) -> Result<User, OsString> {
 #[structopt()]
 /// Change file properties
 pub struct Options {
+    #[structopt(short = "n", long = "dry-run")]
+    /// Scan affected files but don't make any changes
+    pub dry_run: bool,
+
     #[structopt(name = "FILES", parse(from_os_str))]
     pub files: Vec<PathBuf>,
 

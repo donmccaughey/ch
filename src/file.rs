@@ -1,5 +1,8 @@
 use std::error::Error;
+use std::fs::Permissions;
+use std::fs::set_permissions;
 use std::os::unix::fs::MetadataExt;
+use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 
 use users::get_group_by_gid;
@@ -58,14 +61,18 @@ impl<'o> File<'o> {
 
         if let Some(ref new_owner) = options.owner {
             if self.owner.uid() != new_owner.uid() {
-                // TODO: change owner
+                if !options.dry_run {
+                    // TODO: change owner
+                }
                 changes.owner = Some(new_owner);
             }
         }
 
         if let Some(ref new_group) = options.group {
             if self.group.gid() != new_group.gid() {
-                // TODO: change group
+                if !options.dry_run {
+                    // TODO: change group
+                }
                 changes.group = Some(new_group);
             }
         }
@@ -73,7 +80,12 @@ impl<'o> File<'o> {
         if let Some(ref mode_change) = options.mode_change {
             let new_mode = mode_change.apply(self.mode);
             if self.mode != new_mode {
-                // TODO: change mode
+                if !options.dry_run {
+                    match set_permissions(&self.abs_path, Permissions::from_mode(new_mode)) {
+                        Ok(_) => (),
+                        Err(error) => return Err(Box::new(error)),
+                    }
+                }
                 changes.mode = Some(new_mode);
             }
         }
