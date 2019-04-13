@@ -65,8 +65,8 @@ impl<'o> File<'o> {
             }
         }
 
-        if let Some(ref mode) = options.mode {
-            let new_mode = mode.change(self.mode);
+        if let Some(ref mode_change) = options.mode_change {
+            let new_mode = mode_change.apply(self.mode);
             if self.mode != new_mode {
                 // TODO: change mode
                 changes.mode = Some(new_mode);

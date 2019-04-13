@@ -9,7 +9,7 @@ use users::get_group_by_name;
 use users::get_user_by_name;
 use users::Group;
 use users::User;
-use crate::mode::Mode;
+use crate::mode::ModeChange;
 
 
 fn get_group(group_name: &OsStr) -> Result<Group, OsString> {
@@ -22,9 +22,9 @@ fn get_group(group_name: &OsStr) -> Result<Group, OsString> {
     }
 }
 
-fn get_mode(mode_name: &OsStr) -> Result<Mode, OsString> {
+fn get_mode_change(mode_name: &OsStr) -> Result<ModeChange, OsString> {
     if let Some(mode_str) = mode_name.to_str() {
-        if let Some(mode) = Mode::new(mode_str) {
+        if let Some(mode) = ModeChange::new(mode_str) {
             return Ok(mode)
         }
     }
@@ -55,9 +55,9 @@ pub struct Options {
     /// Change the group of FILES to this group name or numeric ID
     pub group: Option<Group>,
 
-    #[structopt(short, long, parse(try_from_os_str = "get_mode"))]
+    #[structopt(name = "mode", short, long, parse(try_from_os_str = "get_mode_change"))]
     /// Change the mode bits of FILES to this octal or symbolic mode
-    pub mode: Option<Mode>,
+    pub mode_change: Option<ModeChange>,
 
     #[structopt(short, long, parse(try_from_os_str = "get_user"))]
     /// Change the owner of FILES to this user name or numeric ID
@@ -85,19 +85,19 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_get_mode_ok() {
-        let mode_name = OsStr::new("0754");
-        let result = get_mode(mode_name);
+    fn test_get_mode_change_ok() {
+        let mode_str = OsStr::new("0754");
+        let result = get_mode_change(mode_str);
         assert!(result.is_ok());
-        let mode = result.unwrap();
-        assert_eq!(0o0754, mode.additive_mask);
-        assert_eq!(0o7777, mode.subtractive_mask);
+        let mode_change = result.unwrap();
+        assert_eq!(0o0754, mode_change.apply(0o0000));
+        assert_eq!(0o0754, mode_change.apply(0o7777));
     }
 
     #[test]
-    fn test_get_mode_err() {
-        let mode_name = OsStr::new("fubar");
-        let result = get_mode(mode_name);
+    fn test_get_mode_change_err() {
+        let mode_str = OsStr::new("fubar");
+        let result = get_mode_change(mode_str);
         assert!(result.is_err());
         let error = result.unwrap_err();
         assert_eq!("fubar: invalid mode", error);
