@@ -90,8 +90,8 @@ mod test {
         let result = get_mode(mode_name);
         assert!(result.is_ok());
         let mode = result.unwrap();
-        assert_eq!(0o0000_0754, mode.additive_mask);
-        assert_eq!(0o0000_7777, mode.subtractive_mask);
+        assert_eq!(0o0754, mode.additive_mask);
+        assert_eq!(0o7777, mode.subtractive_mask);
     }
 
     #[test]

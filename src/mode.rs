@@ -16,7 +16,7 @@ impl Mode {
         if let Ok(mode_bits) = ModeT::from_str_radix(mode_str, 8) {
             return Some(Mode {
                 additive_mask: mode_bits,
-                subtractive_mask: 0o0000_7777,
+                subtractive_mask: 0o7777,
             })
         } else {
             None
@@ -38,8 +38,8 @@ mod tests {
         let some_mode = Mode::new("0644");
         assert!(some_mode.is_some());
         let mode = some_mode.unwrap();
-        assert_eq!(0o0000_0644, mode.additive_mask);
-        assert_eq!(0o0000_7777, mode.subtractive_mask);
+        assert_eq!(0o0644, mode.additive_mask);
+        assert_eq!(0o7777, mode.subtractive_mask);
     }
 
     #[test]
