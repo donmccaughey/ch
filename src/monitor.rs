@@ -3,6 +3,8 @@ use crate::target::Target;
 use std::borrow::Cow;
 use std::env::args_os;
 use std::path::Path;
+use crate::file::File;
+use std::error::Error;
 
 
 pub struct Monitor<'o> {
@@ -28,30 +30,34 @@ impl<'o> Monitor<'o> {
         }
     }
 
-    pub fn changed_target(&self, target: &'o Target) {
+    pub fn changed_target(&self, target: &'o Target, file: &File) {
         match self.options.verbose {
             0 => (),
             1 => println!("{}", self.target_name(target)),
-            _ => println!("{}: {}", self.target_name(target), self.property_changes(target)),
+            _ => println!("{}: {}", self.target_name(target), self.property_changes(target, file)),
         }
+    }
+
+    pub fn error_changing_target(&self, error: &Box<Error>, target: &'o Target, file: &File) {
+        eprintln!("{}: {}", self.target_name(target), error);
     }
 
     pub fn missing_target(&self, target: &'o Target) {
         println!("{}: {}: No such file or directory",
-                 self.command, target.file.to_string_lossy());
+                 self.command, target.name.to_string_lossy());
     }
 
-    fn property_changes(&self, target: &'o Target) -> String {
+    fn property_changes(&self, target: &'o Target, file: &File) -> String {
         let mut parts: Vec<String> = Vec::new();
-        if let (Some(ref from_owner), Some(ref to_owner)) = (&target.owner, &self.options.owner) {
+        if let Some(ref to_owner) = &self.options.owner {
             let change = format!("owner {} -> {}",
-                                 from_owner.name().to_string_lossy(),
+                                 file.owner.name().to_string_lossy(),
                                  to_owner.name().to_string_lossy());
             parts.push(change);
         }
-        if let (Some(ref from_group), Some(ref to_group)) = (&target.group, &self.options.group) {
+        if let Some(ref to_group) = &self.options.group {
             let change = format!("group {} -> {}",
-                                 from_group.name().to_string_lossy(),
+                                 file.group.name().to_string_lossy(),
                                  to_group.name().to_string_lossy());
             parts.push(change);
         }
