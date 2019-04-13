@@ -1,9 +1,9 @@
 # ch
 
-A command line utility to change file properties.
+A command line utility for changing file properties.
 
 `ch` combines the functions of `chown`, `chgrp` and `chmod` into a single
-utility that can change all three properties simultaneously.
+utility that can change the owner, group and mode properties of files simultaneously.
 
 ## Usage
 
