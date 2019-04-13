@@ -49,6 +49,7 @@ impl<'o> Monitor<'o> {
 
     fn property_changes(&self, target: &'o Target, file: &File) -> String {
         let mut parts: Vec<String> = Vec::new();
+
         if let Some(ref to_owner) = &self.options.owner {
             let change = format!("owner {} -> {}",
                                  file.owner.name().to_string_lossy(),
@@ -61,7 +62,15 @@ impl<'o> Monitor<'o> {
                                  to_group.name().to_string_lossy());
             parts.push(change);
         }
-        // TODO: mode 0100755 [-rwxr-xr-x ] -> 0100777 [-rwxrwxrwx ]
+        if let Some(ref to_mode) = &self.options.mode {
+            let new_mode = to_mode.change(file.mode);
+            if file.mode != new_mode {
+                // TODO: mode 0100755 [-rwxr-xr-x ] -> 0100777 [-rwxrwxrwx ]
+                let change = format!("mode {:07o} -> {:07o}", file.mode, new_mode);
+                parts.push(change);
+            }
+        }
+
         parts.join(", ")
     }
 
