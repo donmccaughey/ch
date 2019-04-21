@@ -63,7 +63,7 @@ impl<'o> ChMod<'o> {
             return Ok(());
         } else {
             unsafe {
-                match libc::chmod(self.file.c_path(), self.mode as u16) {
+                match libc::chmod(self.file.c_path(), self.mode) {
                     0 => Ok(()),
                     _ => return Err(Box::new(LibCError::from_errno())),
                 }
