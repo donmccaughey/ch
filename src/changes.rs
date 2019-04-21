@@ -13,7 +13,7 @@ use crate::options::Options;
 
 pub struct AppliedChange<'o> {
     pub change: &'o Change<'o>,
-    pub error: Option<Box<Error>>,
+    pub error: Option<Box<dyn Error>>,
 }
 
 
@@ -57,7 +57,7 @@ impl<'o> ChMod<'o> {
         None
     }
 
-    pub fn apply(&self) -> Result<(), Box<Error>> {
+    pub fn apply(&self) -> Result<(), Box<dyn Error>> {
         if self.options.dry_run {
             return Ok(());
         } else {
@@ -113,7 +113,7 @@ impl<'o> ChOwn<'o> {
         }
     }
 
-    pub fn apply(&self) -> Result<(), Box<Error>> {
+    pub fn apply(&self) -> Result<(), Box<dyn Error>> {
         if self.options.dry_run {
             return Ok(());
         } else {
