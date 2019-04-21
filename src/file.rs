@@ -12,7 +12,6 @@ use users::User;
 use crate::changes::Change;
 use crate::changes::ChMod;
 use crate::changes::ChOwn;
-use crate::mode::ModeT;
 use crate::options::Options;
 
 
@@ -22,7 +21,7 @@ pub struct File<'o> {
     pub abs_path: PathBuf,
     pub owner: User,
     pub group: Group,
-    pub mode: ModeT,
+    pub mode: libc::mode_t,
 }
 
 impl<'o> File<'o> {
@@ -49,7 +48,7 @@ impl<'o> File<'o> {
             abs_path: abs_path,
             owner: owner,
             group: group,
-            mode: metadata.mode(),
+            mode: metadata.mode() as libc::mode_t,
         })
     }
 

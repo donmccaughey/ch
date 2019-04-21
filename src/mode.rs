@@ -1,8 +1,7 @@
-use std::u32;
+use libc;
 
 
-pub type ModeT = u32;
-pub type ModeMask = u32;
+pub type ModeMask = libc::mode_t;
 
 
 #[derive(Debug)]
@@ -13,7 +12,7 @@ pub struct ModeChange {
 
 impl ModeChange {
     pub fn new(mode_str: &str) -> Option<ModeChange> {
-        if let Ok(mode_bits) = ModeT::from_str_radix(mode_str, 8) {
+        if let Ok(mode_bits) = libc::mode_t::from_str_radix(mode_str, 8) {
             return Some(ModeChange {
                 additive: mode_bits,
                 subtractive: 0o7777,
@@ -23,7 +22,7 @@ impl ModeChange {
         }
     }
 
-    pub fn apply(&self, mode: ModeT) -> ModeT {
+    pub fn apply(&self, mode: libc::mode_t) -> libc::mode_t {
         mode & !self.subtractive | self.additive
     }
 }
@@ -51,10 +50,10 @@ mod tests {
     #[test]
     fn test_apply() {
         let mode_change = ModeChange::new("0754").unwrap();
-        assert_eq!(0o010_0754, mode_change.apply(0o010_7777));
-        assert_eq!(0o004_0754, mode_change.apply(0o004_0777));
-        assert_eq!(0o020_0754, mode_change.apply(0o020_0755));
-        assert_eq!(0o001_0754, mode_change.apply(0o001_0644));
-        assert_eq!(0o100_0754, mode_change.apply(0o100_0000));
+        assert_eq!(0o10_0754, mode_change.apply(0o10_7777));
+        assert_eq!(0o04_0754, mode_change.apply(0o04_0777));
+        assert_eq!(0o10_0754, mode_change.apply(0o10_0755));
+        assert_eq!(0o01_0754, mode_change.apply(0o01_0644));
+        assert_eq!(0o17_0754, mode_change.apply(0o17_0000));
     }
 }

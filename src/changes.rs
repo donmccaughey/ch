@@ -1,3 +1,5 @@
+use libc;
+
 use std::error::Error;
 
 use users::gid_t;
@@ -7,7 +9,6 @@ use users::User;
 
 use crate::file::File;
 use crate::libc_error::LibCError;
-use crate::mode::ModeT;
 use crate::options::Options;
 
 
@@ -39,7 +40,7 @@ impl<'o> Change<'o> {
 pub struct ChMod<'o> {
     pub file: &'o File<'o>,
     pub options: &'o Options,
-    pub mode: ModeT,
+    pub mode: libc::mode_t,
 }
 
 impl<'o> ChMod<'o> {
