@@ -1,6 +1,3 @@
-extern crate structopt;
-extern crate users;
-
 mod changes;
 mod file;
 mod libc_error;
