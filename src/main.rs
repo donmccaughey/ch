@@ -3,11 +3,14 @@ extern crate users;
 
 mod changes;
 mod file;
+mod libc_error;
 mod mode;
 mod options;
 mod report;
 mod target;
 
+use changes::Change;
+use file::File;
 use options::Options;
 use report::Report;
 use target::Target;
@@ -19,15 +22,20 @@ fn main() {
 
     for target in options.targets() {
         match target {
-            Target::Found(ref file) => {
-                match file.change_properties(&options) {
-                    Ok(changes) => report.file_was_changed(file, &changes),
-                    Err(ref error) => report.file_change_failed(file, error),
-                }
-            },
-            Target::Missing(name) => {
-                report.target_is_missing(name);
-            },
+            Target::Found(ref file)  => change_file(file, &options, &report),
+            Target::Missing(name) => report.missing_target(name),
         }
+    }
+}
+
+fn change_file(file: &File, options: &Options, report: &Report) {
+    let changes = file.changes(&options);
+    if changes.is_empty() {
+        report.no_changes(file);
+    } else {
+        let applied_changes = changes.iter()
+            .map(Change::apply)
+            .collect();
+        report.changes_applied(file, applied_changes);
     }
 }

@@ -1,16 +1,17 @@
-use std::error::Error;
-use std::fs::Permissions;
-use std::fs::set_permissions;
+use std::ffi::CStr;
+use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::MetadataExt;
-use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 
+use libc;
 use users::get_group_by_gid;
 use users::get_user_by_uid;
 use users::Group;
 use users::User;
 
-use crate::changes::Changes;
+use crate::changes::Change;
+use crate::changes::ChMod;
+use crate::changes::ChOwn;
 use crate::mode::ModeT;
 use crate::options::Options;
 
@@ -52,44 +53,22 @@ impl<'o> File<'o> {
         })
     }
 
-    pub fn change_properties(&self, options: &'o Options) -> Result<Changes<'o>, Box<Error>> {
-        let mut changes = Changes {
-            owner: None,
-            group: None,
-            mode: None,
-        };
+    pub fn changes(&self, options: &'o Options) -> Vec<Change> {
+        let mut changes: Vec<Change> = Vec::new();
 
-        if let Some(ref new_owner) = options.owner {
-            if self.owner.uid() != new_owner.uid() {
-                if !options.dry_run {
-                    // TODO: change owner
-                }
-                changes.owner = Some(new_owner);
-            }
+        if let Some(chown) = ChOwn::new(self, options) {
+            changes.push(Change::Owner(chown));
+        }
+        if let Some(chmod) = ChMod::new(self, options) {
+            changes.push(Change::Mode(chmod));
         }
 
-        if let Some(ref new_group) = options.group {
-            if self.group.gid() != new_group.gid() {
-                if !options.dry_run {
-                    // TODO: change group
-                }
-                changes.group = Some(new_group);
-            }
-        }
+        changes
+    }
 
-        if let Some(ref mode_change) = options.mode_change {
-            let new_mode = mode_change.apply(self.mode);
-            if self.mode != new_mode {
-                if !options.dry_run {
-                    match set_permissions(&self.abs_path, Permissions::from_mode(new_mode)) {
-                        Ok(_) => (),
-                        Err(error) => return Err(Box::new(error)),
-                    }
-                }
-                changes.mode = Some(new_mode);
-            }
-        }
-
-        Ok(changes)
+    pub unsafe fn c_path(&self) -> *const libc::c_char {
+        let bytes = self.abs_path.as_os_str().as_bytes();
+        let cstr = CStr::from_bytes_with_nul_unchecked(bytes);
+        cstr.as_ptr()
     }
 }

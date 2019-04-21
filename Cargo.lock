@@ -27,6 +27,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "ch"
 version = "0.1.0"
 dependencies = [
+ "libc 0.2.50 (registry+https://github.com/rust-lang/crates.io-index)",
  "structopt 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "users 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

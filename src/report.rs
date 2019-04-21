@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 use std::env::args_os;
-use std::error::Error;
 use std::path::Path;
 use std::path::PathBuf;
 
-use crate::changes::Changes;
+use crate::changes::AppliedChange;
+use crate::changes::Change;
 use crate::file::File;
 use crate::options::Options;
 
@@ -32,45 +32,63 @@ impl<'o> Report<'o> {
         }
     }
 
-    pub fn file_was_changed(&self, file: &'o File, changes: &'o Changes) {
+    pub fn changes_applied(&self, file: &'o File, applied_changes: Vec<AppliedChange>) {
+        let successful_changes: Vec<_> = applied_changes.iter()
+            .filter(|&applied_change| applied_change.error.is_none())
+            .map(|successful_change| self.describe_change(successful_change))
+            .collect();
+        if !successful_changes.is_empty() {
+            match self.options.verbose {
+                0 => (),
+                1 => println!("{}", self.file_name(file)),
+                _ => println!("{}: {}", self.file_name(file), successful_changes.join(", ")),
+            }
+        }
+        let failed_changes = applied_changes.iter()
+            .filter(|&applied_change| applied_change.error.is_some());
+        for applied_change in failed_changes {
+            if let Some(ref error) = applied_change.error {
+                eprintln!("{}: {}: ({}): {}", self.command, self.file_name(file), self.describe_change(&applied_change), error);
+            }
+        }
+    }
+
+    pub fn no_changes(&self, file: &'o File) {
         match self.options.verbose {
             0 => (),
             1 => println!("{}", self.file_name(file)),
-            _ => println!("{}: {}", self.file_name(file), self.change_list(file, changes)),
+            _ => println!("{}: no changes", self.file_name(file)),
         }
     }
 
-    pub fn file_change_failed(&self, file: &'o File, error: &Box<Error>) {
-        eprintln!("{}: {}", self.file_name(file), error);
+    pub fn missing_target(&self, name: &'o PathBuf) {
+        eprintln!("{}: {}: No such file or directory",
+                  self.command, name.to_string_lossy());
     }
 
-    pub fn target_is_missing(&self, name: &'o PathBuf) {
-        println!("{}: {}: No such file or directory",
-                 self.command, name.to_string_lossy());
-    }
-
-    fn change_list(&self, file: &'o File, changes: &'o Changes) -> String {
-        let mut parts: Vec<String> = Vec::new();
-
-        if let Some(new_owner) = changes.owner {
-            let change = format!("owner {} -> {}",
-                                 file.owner.name().to_string_lossy(),
-                                 new_owner.name().to_string_lossy());
-            parts.push(change);
+    fn describe_change(&self, applied_change: &AppliedChange) -> String {
+        match applied_change.change {
+            Change::Owner(ref chown) => {
+                let mut parts: Vec<String> = Vec::new();
+                if let Some(new_owner) = chown.owner {
+                    let change = format!("owner {} -> {}",
+                                         chown.file.owner.name().to_string_lossy(),
+                                         new_owner.name().to_string_lossy());
+                    parts.push(change);
+                }
+                if let Some(new_group) = chown.group {
+                    let change = format!("group {} -> {}",
+                                         chown.file.group.name().to_string_lossy(),
+                                         new_group.name().to_string_lossy());
+                    parts.push(change);
+                }
+                parts.join(", ")
+            },
+            Change::Mode(ref chmod) => {
+                // TODO: mode 0100755 [-rwxr-xr-x ] -> 0100777 [-rwxrwxrwx ]
+                format!("mode {:07o} -> {:07o}", chmod.file.mode, chmod.mode)
+            },
         }
-        if let Some(new_group) = changes.group {
-            let change = format!("group {} -> {}",
-                                 file.group.name().to_string_lossy(),
-                                 new_group.name().to_string_lossy());
-            parts.push(change);
-        }
-        if let Some(new_mode) = changes.mode {
-            // TODO: mode 0100755 [-rwxr-xr-x ] -> 0100777 [-rwxrwxrwx ]
-            let change = format!("mode {:07o} -> {:07o}", file.mode, new_mode);
-            parts.push(change);
-        }
-
-        parts.join(", ")
     }
 
     fn file_name(&self, file: &'o File) -> Cow<str> {
